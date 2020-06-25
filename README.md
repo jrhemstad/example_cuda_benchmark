@@ -1,2 +1,2 @@
-# example_cuda_benchmark
-Template repository for CUDA enabled benchmarks using Google Benchmark
+# cuda_scalar_result
+Answering "What is the faster way to return a single scalar from a kernel to host?" 
