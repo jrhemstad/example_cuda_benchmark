@@ -76,8 +76,8 @@ class cuda_event_timer {
    *                            every iteration.
    * @param[in] stream_ The CUDA stream we are measuring time on.
    */
-  cuda_event_timer(benchmark::State &state, bool flush_l2_cache = false, cudaStream_t stream_ = 0)
-    : p_state(&state), stream(stream)
+  cuda_event_timer(benchmark::State &state, bool flush_l2_cache = false, cudaStream_t stream = 0)
+    : p_state(&state), stream_(stream)
   {
     // flush all of L2$
     if (flush_l2_cache) {
@@ -92,14 +92,14 @@ class cuda_event_timer {
         const int memset_value = 0;
         int *l2_cache_buffer   = nullptr;
         BENCH_CUDA_TRY(cudaMalloc(&l2_cache_buffer, l2_cache_bytes));
-        BENCH_CUDA_TRY(cudaMemsetAsync(l2_cache_buffer, memset_value, l2_cache_bytes, stream));
+        BENCH_CUDA_TRY(cudaMemsetAsync(l2_cache_buffer, memset_value, l2_cache_bytes, stream_));
         BENCH_CUDA_TRY(cudaFree(l2_cache_buffer));
       }
     }
 
-    BENCH_CUDA_TRY(cudaEventCreate(&start));
-    BENCH_CUDA_TRY(cudaEventCreate(&stop));
-    BENCH_CUDA_TRY(cudaEventRecord(start, stream));
+    BENCH_CUDA_TRY(cudaEventCreate(&start_));
+    BENCH_CUDA_TRY(cudaEventCreate(&stop_));
+    BENCH_CUDA_TRY(cudaEventRecord(start_, stream_));
   }
 
   cuda_event_timer() = delete;
@@ -110,18 +110,18 @@ class cuda_event_timer {
    */
   ~cuda_event_timer()
   {
-    BENCH_CUDA_TRY(cudaEventRecord(stop, stream));
-    BENCH_CUDA_TRY(cudaEventSynchronize(stop));
+    BENCH_CUDA_TRY(cudaEventRecord(stop_, stream_));
+    BENCH_CUDA_TRY(cudaEventSynchronize(stop_));
     float milliseconds = 0.0f;
-    BENCH_CUDA_TRY(cudaEventElapsedTime(&milliseconds, start, stop));
+    BENCH_CUDA_TRY(cudaEventElapsedTime(&milliseconds, start_, stop_));
     p_state->SetIterationTime(milliseconds / (1000.0f));
-    BENCH_CUDA_TRY(cudaEventDestroy(start));
-    BENCH_CUDA_TRY(cudaEventDestroy(stop));
+    BENCH_CUDA_TRY(cudaEventDestroy(start_));
+    BENCH_CUDA_TRY(cudaEventDestroy(stop_));
   }
 
  private:
-  cudaEvent_t start;
-  cudaEvent_t stop;
-  cudaStream_t stream;
+  cudaEvent_t start_;
+  cudaEvent_t stop_;
+  cudaStream_t stream_;
   benchmark::State *p_state;
 };
