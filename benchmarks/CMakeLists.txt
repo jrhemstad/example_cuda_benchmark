@@ -53,3 +53,11 @@ set(EXAMPLE_BENCH_SRC
 ConfigureBench(EXAMPLE_BENCH "${EXAMPLE_BENCH_SRC}")
 
 ###################################################################################################
+# - example CUDA benchmark --------------------------------------------------------------------------------
+
+set(EXAMPLE_CUDA_BENCH_SRC
+  "${CMAKE_CURRENT_SOURCE_DIR}/example/example_benchmark.cu")
+
+ConfigureBench(EXAMPLE_CUDA_BENCH "${EXAMPLE_CUDA_BENCH_SRC}")
+
+###################################################################################################
