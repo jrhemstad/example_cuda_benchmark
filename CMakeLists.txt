@@ -37,7 +37,7 @@ endif()
 ###################################################################################################
 # - compiler options ------------------------------------------------------------------------------
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER $ENV{CC})
 set(CMAKE_CXX_COMPILER $ENV{CXX})
@@ -56,9 +56,52 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     endif(CMAKE_CXX11_ABI)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda --expt-relaxed-constexpr")
+
 # Build options
 option(BUILD_TESTS "Configure CMake to build tests" ON)
 option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ON)
+
+if(CMAKE_CUDA_COMPILER_VERSION)
+  # Compute the version. from  CMAKE_CUDA_COMPILER_VERSION
+  string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1" CUDA_VERSION_MAJOR ${CMAKE_CUDA_COMPILER_VERSION})
+  string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\2" CUDA_VERSION_MINOR ${CMAKE_CUDA_COMPILER_VERSION})
+  set(CUDA_VERSION "${CUDA_VERSION_MAJOR}.${CUDA_VERSION_MINOR}" CACHE STRING "Version of CUDA as computed from nvcc.")
+  mark_as_advanced(CUDA_VERSION)
+endif()
+
+message(STATUS "CUDA_VERSION: ${CUDA_VERSION}")
+
+# Always set this convenience variable
+set(CUDA_VERSION_STRING "${CUDA_VERSION}")
+
+# Auto-detect available GPU compute architectures
+set(GPU_ARCHS "" CACHE STRING "List of GPU architectures (semicolon-separated) to be compiled for. Pass 'ALL' if you want to compile for all supported GPU architectures. Empty string means to auto-detect the GPUs on the current system")
+
+if("${GPU_ARCHS}" STREQUAL "")
+  include(cmake/EvalGpuArchs.cmake)
+  evaluate_gpu_archs(GPU_ARCHS)
+endif()
+
+if("${GPU_ARCHS}" STREQUAL "ALL")
+  set(GPU_ARCHS "60")
+  if((CUDA_VERSION_MAJOR EQUAL 9) OR (CUDA_VERSION_MAJOR GREATER 9))
+    set(GPU_ARCHS "${GPU_ARCHS};70")
+  endif()
+  if((CUDA_VERSION_MAJOR EQUAL 10) OR (CUDA_VERSION_MAJOR GREATER 10))
+    set(GPU_ARCHS "${GPU_ARCHS};75")
+  endif()
+endif()
+
+foreach(arch ${GPU_ARCHS})
+  message(STATUS ${arch})
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_${arch},code=sm_${arch}")
+endforeach()
+
+list(GET GPU_ARCHS -1 ptx)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_${ptx},code=compute_${ptx}")
+
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda --expt-relaxed-constexpr")
 
 ###################################################################################################
 # - cmake modules ---------------------------------------------------------------------------------
