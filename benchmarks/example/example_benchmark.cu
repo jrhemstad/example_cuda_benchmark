@@ -7,7 +7,6 @@
 #include <thrust/random.h>
 #include <cuda/atomic>
 #include <synchronization.hpp>
-//#include "hash_functions.cuh"
 
 template <typename T>
 void BM_weak_sequential_load(benchmark::State &state)
@@ -22,7 +21,6 @@ void BM_weak_sequential_load(benchmark::State &state)
         volatile auto l = input_data[index];
       });
   }
-
   state.SetBytesProcessed(int64_t(state.iterations()) * int64_t(state.range(0)) * sizeof(T));
 }
 BENCHMARK_TEMPLATE(BM_weak_sequential_load, int32_t)
