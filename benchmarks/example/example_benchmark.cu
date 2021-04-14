@@ -31,12 +31,6 @@ inline void throw_cuda_error(cudaError_t error, const char *file, unsigned int l
   } while (0)
 
 
-__global__ void kernel(int * i, std::size_t n)
-{
-  auto idx = threadIdx.x + static_cast<std::size_t>(blockIdx.x) * blockDim.x;
-  if (idx < n) { i[idx] = i[idx] + 1; }
-}
-
 void BM_cuda_async_no_threshold(benchmark::State &state)
 {
   cudaStream_t s;
@@ -48,7 +42,6 @@ void BM_cuda_async_no_threshold(benchmark::State &state)
   for (auto _ : state) {
     int *ptr;
     CUDA_TRY(cudaMallocAsync(&ptr, state.range(0) * sizeof(int), s));
-    kernel<<<grid_size, block_size>>>(ptr, state.range(0));
     CUDA_TRY(cudaFreeAsync(ptr, s));
     CUDA_TRY(cudaStreamSynchronize(s));
   }
@@ -57,7 +50,7 @@ void BM_cuda_async_no_threshold(benchmark::State &state)
 BENCHMARK(BM_cuda_async_no_threshold)
   ->RangeMultiplier(10)
   ->Range(100'000, 100'000'000)
-  ->Unit(benchmark::kMillisecond);
+  ->Unit(benchmark::kMicrosecond);
 
 void BM_cuda_async_threshold(benchmark::State &state)
 {
@@ -75,7 +68,6 @@ void BM_cuda_async_threshold(benchmark::State &state)
   for (auto _ : state) {
     int *ptr;
     CUDA_TRY(cudaMallocAsync(&ptr, state.range(0) * sizeof(int), s));
-    kernel<<<grid_size, block_size>>>(ptr, state.range(0));
     CUDA_TRY(cudaFreeAsync(ptr, s));
     CUDA_TRY(cudaStreamSynchronize(s));
   }
@@ -84,4 +76,4 @@ void BM_cuda_async_threshold(benchmark::State &state)
 BENCHMARK(BM_cuda_async_threshold)
   ->RangeMultiplier(10)
   ->Range(100'000, 100'000'000)
-  ->Unit(benchmark::kMillisecond);
+  ->Unit(benchmark::kMicrosecond);
