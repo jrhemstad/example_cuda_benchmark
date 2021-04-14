@@ -57,7 +57,7 @@ void BM_cuda_async_no_threshold(benchmark::State &state)
 BENCHMARK(BM_cuda_async_no_threshold)
   ->RangeMultiplier(10)
   ->Range(100'000, 100'000'000)
-  ->Unit(benchmark::kNanosecond);
+  ->Unit(benchmark::kMillisecond);
 
 void BM_cuda_async_threshold(benchmark::State &state)
 {
@@ -84,4 +84,4 @@ void BM_cuda_async_threshold(benchmark::State &state)
 BENCHMARK(BM_cuda_async_threshold)
   ->RangeMultiplier(10)
   ->Range(100'000, 100'000'000)
-  ->Unit(benchmark::kNanosecond);
+  ->Unit(benchmark::kMillisecond);
